@@ -3,10 +3,11 @@ const express = require('express');
 const morgan = require('morgan');
 const connectDB = require('./config/db');
 const cors = require('cors');
+const sequelize = require('./models')
 
 const app = express();
 
-connectDB();
+// connectDB();
 
 app.use(express.json());
 app.use(cors());
@@ -19,6 +20,13 @@ const userRouter = require('./routes/user.route');
 // Use Routes
 app.use('/api', authRouter);
 app.use('/api', userRouter);
+
+try {
+	sequelize.sync();
+}
+catch(error) {
+	console.log(error)
+}
 
 app.use((req, res) => {
 	res.status(404).json({

@@ -1,4 +1,5 @@
-const User = require('../models/auth.model');
+const { models } = require('../models')
+const User = models.user;
 const expressJwt = require('express-jwt');
 const _ = require('lodash');
 const { OAuth2Client } = require('google-auth-library');
@@ -20,8 +21,10 @@ exports.registerController = (req, res) => {
 		});
 	} else {
 		User.findOne({
-			email,
-		}).exec((err, user) => {
+			where: {
+				email: email
+			},
+		}).then((user) => {
 			if (user) {
 				return res.status(400).json({
 					errors: 'Email is already taken',
@@ -62,33 +65,34 @@ exports.activationController = (req, res) => {
 	const { token } = req.body;
 
 	if (token) {
-		jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION, (err, decoded) => {
+		jwt.verify(token, process.env.JWT_ACCOUNT_ACTIVATION, async (err, decoded) => {
 			if (err) {
 				return res.status(401).json({
 					errors: 'Expired link. Signup again',
 				});
 			} else {
 				const { name, email, password } = jwt.decode(token);
+				console.log(jwt.decode(token))
 
-				const user = new User({
+				const user = await User.create({
 					name,
 					email,
 					password,
 				});
 
-				user.save((err, user) => {
-					if (err) {
-						return res.status(401).json({
-							errors: errorHandler(err),
-						});
-					} else {
-						return res.json({
-							success: true,
-							message: user,
-							message: 'Signup success',
-						});
-					}
-				});
+				try {
+					await user.save()
+					return res.json({
+						success: true,
+						message: user,
+						message: 'Signup success',
+					});
+				}
+				catch(err) {
+					return res.status(401).json({
+						errors: err,
+					});
+				}
 			}
 		});
 	} else {

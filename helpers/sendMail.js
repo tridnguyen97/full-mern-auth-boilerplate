@@ -17,7 +17,7 @@ const SendMail = (options,res) => {
 	transporter.sendMail(mailOptions, function (err, info) {
 		if (err) {
 		  return res.status(400).json({
-          errors: errorHandler(err)
+          errors: err
         });
 		} else {
 			return res.json({
